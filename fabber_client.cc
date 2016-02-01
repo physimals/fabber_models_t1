@@ -8,7 +8,7 @@
 
 #include "fabbercore/fabber_core.h"
 
-// DWI models to be included from library
+// T1 models to be included from library
 #include "fwdmodel_VFA.h"
 int main(int argc, char** argv) {
 
