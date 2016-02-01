@@ -169,9 +169,9 @@ vector<string> VFAFwdModel::GetUsage() const
 {
   vector<string> usage;
 
-  usage.push_back( "\nThis model is a one compartment model\n");
+  usage.push_back( "\nThis model uses the SPGR equation assuming a fixed TR and that TE<<T2*\n");
   usage.push_back( "It returns  2 parameters :\n");
-  usage.push_back( " T1: the Apparent Diffusion Coefficient\n");
+  usage.push_back( " T1: the Spin-lattice relaxation time\n");
   usage.push_back( " sig0: the initial signal\n");
 
   return usage;
