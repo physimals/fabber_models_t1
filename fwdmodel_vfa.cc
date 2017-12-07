@@ -6,28 +6,84 @@
 
 /*  CCOPYRIGHT */
 
-#include "fwdmodel_VFA.h"
+#include "fwdmodel_vfa.h"
 
-#include <iostream>
+#include "fabber_core/tools.h"
+
 #include <newmatio.h>
-#include <stdexcept>
-#include "newimage/newimageall.h"
-using namespace NEWIMAGE;
-#include "fabbercore/easylog.h"
-#include "miscmaths/miscprob.h"
+
+#include <vector>
+#include <string>
+
+using namespace NEWMAT;
+using namespace std;
 
 FactoryRegistration<FwdModelFactory, VFAFwdModel>
-  VFAFwdModel::registration("VFA");
+  VFAFwdModel::registration("vfa");
+
+static OptionSpec OPTIONS[] = {
+    { "tr", OPT_FLOAT, "TR for VFA images", OPT_REQ, "" },
+    { "fas-file", OPT_MATRIX, "File containing a list of flip angles", OPT_NONREQ, "" },
+    { "fa<n>", OPT_MATRIX, "Alternative to fas-file, specify a sequence of flip angles --fa1=30 --fa2=38 etc", OPT_NONREQ, "" },
+    { "radians", OPT_BOOL, "If specified, flip angles are given in radians", OPT_NONREQ, "" },
+};
+
+void VFAFwdModel::GetOptions(vector<OptionSpec> &opts) const
+{
+    for (int i = 0; OPTIONS[i].name != ""; i++)
+    {
+        opts.push_back(OPTIONS[i]);
+    }
+}
+
+std::string VFAFwdModel::GetDescription() const
+{
+    return "Calculates T1 from variable flip angle data, using the SPGR equation assuming a fixed TR and that TE<<T2*";
+}
 
 string VFAFwdModel::ModelVersion() const
 {
-  return "$Id: fwdmodel_VFA.cc,v 1.11 2016/01/06 15:20:47 Kallehauge Exp $";
+    string version = "fwdmodel_vfa.cc";
+#ifdef GIT_SHA1
+    version += string(" Revision ") + GIT_SHA1;
+#endif
+#ifdef GIT_DATE
+    version += string(" Last commit ") + GIT_DATE;
+#endif
+    return version;
+}
+
+void VFAFwdModel::Initialize(FabberRunData &rundata)
+{
+  m_tr = rundata.GetDouble("tr");
+  string fas_file = rundata.GetStringDefault("fas-file", "");
+  if (fas_file != "") {
+      m_fas = fabber::read_matrix_file(fas_file);
+  }
+  vector<double> fas = rundata.GetDoubleList("fa");
+  if (fas.size() > 0) {
+    if (fas_file != "") {
+      throw FabberRunDataError("Can't specify flip angles in a file and also using individual options");
+    }
+    m_fas.ReSize(fas.size());
+    for (unsigned int i=0; i<fas.size(); i++) {
+      m_fas(i+1) = fas[i];
+    }
+  }
+  m_radians = rundata.GetBool("radians");
+}
+
+void VFAFwdModel::NameParams(vector<string>& names) const
+{
+  names.clear();
+
+  names.push_back("T1");
+  names.push_back("sig0");
 }
 
 void VFAFwdModel::HardcodedInitialDists(MVNDist& prior,
     MVNDist& posterior) const
 {
-    Tracer_Plus tr("VFAFwdModel::HardcodedInitialDists");
     assert(prior.means.Nrows() == NumParams());
 
      SymmetricMatrix precisions = IdentityMatrix(NumParams()) * 1e-12;
@@ -52,15 +108,10 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist& prior,
     precisions(T1_index(),T1_index()) = 0.1;
 
     posterior.SetPrecisions(precisions);
-
 }
-
-
 
 void VFAFwdModel::Evaluate(const ColumnVector& params, ColumnVector& result) const
 {
-  Tracer_Plus tr("VFAFwdModel::Evaluate");
-
     // ensure that values are reasonable
     // negative check
    ColumnVector paramcpy = params;
@@ -79,14 +130,14 @@ void VFAFwdModel::Evaluate(const ColumnVector& params, ColumnVector& result) con
    if (T1<1e-8) T1=1e-8;
    if (sig0<1e-8) sig0=1e-8;
 
-   ColumnVector FAvalshere; // the arterial signal to use for the analysis
-   if (FAvals.Nrows()>0) {
-     FAvalshere = FAvals; //use the artsig that was loaded by the model
+   ColumnVector m_fashere; // the arterial signal to use for the analysis
+   if (m_fas.Nrows()>0) {
+     m_fashere = m_fas; //use the artsig that was loaded by the model
    }
    else {
      //use an artsig from supplementary data
      if (suppdata.Nrows()>0) {
-       FAvalshere = suppdata;
+       m_fashere = suppdata;
      }
      else {
        cout << "No valid b values found" << endl;
@@ -94,8 +145,8 @@ void VFAFwdModel::Evaluate(const ColumnVector& params, ColumnVector& result) con
      }
    }
    // use length of the aif to determine the number of time points
-   int ntpts = FAvalshere.Nrows();
-   FA_radians=FAvals*3.1415926/180;
+   int ntpts = m_fashere.Nrows();
+   FA_radians=m_fas*3.1415926/180;
 
 
 
@@ -103,14 +154,14 @@ void VFAFwdModel::Evaluate(const ColumnVector& params, ColumnVector& result) con
    ColumnVector sig(ntpts);
    sig=0.0;
 
-   if (radians){
+   if (m_radians){
        for (int i=1; i<=ntpts; i++){
-       sig(i) = sig0*sin(FAvals(i))*(1-exp(-TR/T1))/(1-cos(FAvals(i))*exp(-TR/T1));
+       sig(i) = sig0*sin(m_fas(i))*(1-exp(-m_tr/T1))/(1-cos(m_fas(i))*exp(-m_tr/T1));
        }
    }
        else{
        for (int i=1; i<=ntpts; i++){
-       sig(i) = sig0*sin(FA_radians(i))*(1-exp(-TR/T1))/(1-cos(FA_radians(i))*exp(-TR/T1));
+       sig(i) = sig0*sin(FA_radians(i))*(1-exp(-m_tr/T1))/(1-cos(FA_radians(i))*exp(-m_tr/T1));
        }
    }
 
@@ -127,66 +178,9 @@ void VFAFwdModel::Evaluate(const ColumnVector& params, ColumnVector& result) con
        break;
          }
    }
-
-
 }
 
 FwdModel* VFAFwdModel::NewInstance()
 {
   return new VFAFwdModel();
-}
-
-void VFAFwdModel::Initialize(ArgsType& args)
-{
-  Tracer_Plus tr("VFAFwdModel::VFAFwdModel");
-    string scanParams = args.ReadWithDefault("scan-params","cmdline");
-
-    if (scanParams == "cmdline")
-    {
-      TR = convertTo<double>(args.Read("TR"));
-      // specify command line parameters here
-      //ColumnVector FAvals;
-      string FAvalfile = args.Read("FAvals");
-    //cout<<bvalfile<<endl;
-      if (FAvalfile != "none") {
-        FAvals = read_ascii_matrix( FAvalfile );
-      }
-    //cout<<bvalfile<<endl;
-       radians = args.ReadBool("radians");
-      doard=false;
-     // if (inferart) doard=true;
-
-      //imageprior = args.ReadBool("imageprior")
-      // add information about the parameters to the log
-      /* do logging here*/
-    }
-
-    else
-        throw invalid_argument("Only --scan-params=cmdline is accepted at the moment");
-}
-
-vector<string> VFAFwdModel::GetUsage() const
-{
-  vector<string> usage;
-
-  usage.push_back( "\nThis model uses the SPGR equation assuming a fixed TR and that TE<<T2*\n");
-  usage.push_back( "It returns  2 parameters :\n");
-  usage.push_back( " T1: the Spin-lattice relaxation time\n");
-  usage.push_back( " sig0: the initial signal\n");
-
-  return usage;
-}
-
-void VFAFwdModel::DumpParameters(const ColumnVector& vec,
-                                    const string& indent) const
-{
-
-}
-
-void VFAFwdModel::NameParams(vector<string>& names) const
-{
-  names.clear();
-
-  names.push_back("T1");
-  names.push_back("sig0");
 }

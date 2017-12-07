@@ -1,20 +1,16 @@
-/*  FABBER - Fast T1 Bayesian Estimation Routine
+/*  FABBER - Fast ASL and BOLD Bayesian Estimation Routine
 
-    Jesper Kallehauge, IBME
+    Michael Chappell, FMRIB Image Analysis & IBME QuBIc Groups
 
-    Copyright (C) 2007-2016 University of Oxford  */
+    Copyright (C) 2007-2015 University of Oxford  */
 
 /*  CCOPYRIGHT */
 
-#include "fabbercore/fabber_core.h"
+#include "fabber_core/fabber_core.h"
 
-// T1 models to be included from library
-#include "fwdmodel_VFA.h"
-int main(int argc, char** argv) {
+#include "fwdmodel_vfa.h"
 
-  //add the T1 models - these will autoregister at this point
-  VFAFwdModel::NewInstance();
-  
-  return execute(argc, argv);
-
+int main(int argc, char **argv)
+{
+    return execute(argc, argv);
 }
