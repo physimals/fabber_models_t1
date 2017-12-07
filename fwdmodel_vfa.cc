@@ -77,7 +77,11 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
             m_fas(i + 1) = fas[i];
         }
     }
-    m_radians = rundata.GetBool("radians");
+
+    if (rundata.GetBool("radians")) 
+    {
+        m_fas = m_fas * 3.1415926 / 180;
+    } 
 }
 
 void VFAFwdModel::NameParams(vector<string> &names) const
@@ -144,29 +148,18 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
 
    
     int ntpts = m_fas.Nrows();
-    FA_radians = m_fas * 3.1415926 / 180;
-
+    if (data.Nrows() != ntpts) {
+        throw FabberRunDataError("Number of volumes in data does not match number of flip angles");
+    }
+    
     // --- SPGR Function ----
     ColumnVector sig(ntpts);
     sig = 0.0;
-
-    if (m_radians)
+    for (int i = 1; i <= ntpts; i++)
     {
-        for (int i = 1; i <= ntpts; i++)
-        {
-            sig(i) = sig0 * sin(m_fas(i)) * (1 - exp(-m_tr / T1))
-                / (1 - cos(m_fas(i)) * exp(-m_tr / T1));
-        }
+        sig(i) = sig0 * sin(m_fas(i)) * (1 - exp(-m_tr / T1))
+            / (1 - cos(m_fas(i)) * exp(-m_tr / T1));
     }
-    else
-    {
-        for (int i = 1; i <= ntpts; i++)
-        {
-            sig(i) = sig0 * sin(FA_radians(i)) * (1 - exp(-m_tr / T1))
-                / (1 - cos(FA_radians(i)) * exp(-m_tr / T1));
-        }
-    }
-
     result = sig;
 
     for (int i = 1; i <= ntpts; i++)
