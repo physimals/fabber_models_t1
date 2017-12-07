@@ -5,13 +5,14 @@ Currently one model is included.
 
 Command line example
 
---output=/home/fsl/Desktop/Data_out/Data 
---data=/home/fsl/Desktop/Data/FA_raw.nii 
---mask=/home/fsl/Desktop/Data/FA_raw_mask.nii 
---method=vb 
---model=VFA 
---noise=white 
---data-order=singlefile 
---save-model-fit 
---FAvals=/home/fsl/Desktop/Data/FAvals.dat 
---TR=0.00343
+    fabber_t1
+      --output=/home/fsl/Desktop/Data_out/Data 
+      --data=/home/fsl/Desktop/Data/FA_raw.nii 
+      --mask=/home/fsl/Desktop/Data/FA_raw_mask.nii 
+      --method=vb 
+      --model=vfa 
+      --noise=white 
+      --data-order=singlefile 
+      --save-model-fit 
+      --fas-file=/home/fsl/Desktop/Data/FAvals.dat 
+      --tr=0.00343
