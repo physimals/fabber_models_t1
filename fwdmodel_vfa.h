@@ -2,7 +2,9 @@
 
     Jesper Kallehauge, IBME
 
-    Copyright (C) 2007-2016 University of Oxford  */
+    Modified by: Alex Smith, FMRIB, 20171206
+
+    Copyright (C) 2007-2017 University of Oxford  */
 
 /*  CCOPYRIGHT */
 
@@ -26,7 +28,7 @@ public:
     virtual void NameParams(std::vector<std::string> &names) const;
     virtual int NumParams() const
     {
-        return 2;
+        return 3;
     }
 
     virtual void HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) const;
@@ -46,10 +48,14 @@ protected:
     {
         return 2;
     }
+    int B1corr_index() const
+    {
+        return 3;
+    }
 
-    double m_tr;
+    double m_TR;
     bool m_radians;
-    NEWMAT::ColumnVector m_fas;
+    NEWMAT::ColumnVector m_FAs;
 
 private:
     /** Auto-register with forward model factory. */
