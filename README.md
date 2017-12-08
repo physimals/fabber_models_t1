@@ -1,18 +1,40 @@
+# T1 Mapping in FABBER #
+
+# Introduction
+
 This project includes different ways of estimating T1 in the FABBER framework
 
-Currently one model is included. 
-    1. The Variable Flip Angle approach ("VFA")
+Current models included:
+1. The Variable Flip Angle approach ("VFA")
+2. The Inversion Recovery approach ("IR")
 
-Command line example
+# Running Model:
+
+## VFA Command line example:
 
     fabber_t1
-      --output=/home/fsl/Desktop/Data_out/Data 
-      --data=/home/fsl/Desktop/Data/FA_raw.nii 
-      --mask=/home/fsl/Desktop/Data/FA_raw_mask.nii 
+      --output=Data_out
+      --data=Raw_T1_Data.nii 
+      --mask=Raw_T1_Data_mask.nii 
       --method=vb 
       --model=vfa 
       --noise=white 
       --data-order=singlefile 
       --save-model-fit 
-      --fas-file=/home/fsl/Desktop/Data/FAvals.dat 
-      --tr=0.00343
+      --FAs=FAvals.txt      // Degrees
+      --TR=0.2              // Seconds
+
+
+## IR Command line example:
+
+    fabber_t1
+      --output=Data_out
+      --data=Raw_T1_Data.nii 
+      --mask=Raw_T1_Data_mask.nii 
+      --method=vb 
+      --model=IR 
+      --noise=white 
+      --data-order=singlefile 
+      --save-model-fit 
+      --TIs-file=TIs.txt      // Seconds
+      --InvEfficiency         // Optional Boolean for Inversion Pulse Efficiency
