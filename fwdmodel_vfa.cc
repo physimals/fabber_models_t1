@@ -21,10 +21,10 @@ using namespace std;
 FactoryRegistration<FwdModelFactory, VFAFwdModel> VFAFwdModel::registration("vfa");
 
 static OptionSpec OPTIONS[] = {
-    { "tr", OPT_FLOAT, "TR for VFA images", OPT_REQ, "" },
+    { "tr", OPT_FLOAT, "TR in seconds for VFA images", OPT_REQ, "" },
     { "fas-file", OPT_MATRIX, "File containing a list of flip angles", OPT_NONREQ, "" },
     { "fa<n>", OPT_MATRIX,
-        "Alternative to fas-file, specify a sequence of flip angles --fa1=30 --fa2=38 etc",
+        "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc",
         OPT_NONREQ, "" },
     { "radians", OPT_BOOL, "If specified, flip angles are given in radians", OPT_NONREQ, "" },
 };
@@ -78,10 +78,10 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
         }
     }
 
-    if (rundata.GetBool("radians")) 
+    if (rundata.GetBool("radians"))
     {
         m_fas = m_fas * 3.1415926 / 180;
-    } 
+    }
 }
 
 void VFAFwdModel::NameParams(vector<string> &names) const
@@ -146,19 +146,19 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     if (sig0 < 1e-8)
         sig0 = 1e-8;
 
-   
     int ntpts = m_fas.Nrows();
-    if (data.Nrows() != ntpts) {
+    if (data.Nrows() != ntpts)
+    {
         throw FabberRunDataError("Number of volumes in data does not match number of flip angles");
     }
-    
+
     // --- SPGR Function ----
     ColumnVector sig(ntpts);
     sig = 0.0;
     for (int i = 1; i <= ntpts; i++)
     {
-        sig(i) = sig0 * sin(m_fas(i)) * (1 - exp(-m_tr / T1))
-            / (1 - cos(m_fas(i)) * exp(-m_tr / T1));
+        sig(i)
+            = sig0 * sin(m_fas(i)) * (1 - exp(-m_tr / T1)) / (1 - cos(m_fas(i)) * exp(-m_tr / T1));
     }
     result = sig;
 
