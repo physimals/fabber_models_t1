@@ -32,6 +32,7 @@ public:
     }
 
     virtual void HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) const;
+    void InitParams(MVNDist& posterior) const;
     virtual void Evaluate(const NEWMAT::ColumnVector &params, NEWMAT::ColumnVector &result) const;
 
     virtual ~VFAFwdModel()

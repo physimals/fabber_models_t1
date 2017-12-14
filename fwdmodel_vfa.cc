@@ -11,6 +11,7 @@
 #include "fwdmodel_vfa.h"
 
 #include "fabber_core/tools.h"
+#include "miscmaths/miscprob.h"
 
 #include <newmatio.h>
 
@@ -123,6 +124,22 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
     // precisions(T1_index(), T1_index()) = 0.1;
 
     // posterior.SetPrecisions(precisions);
+}
+
+void VFAFwdModel::InitParams(MVNDist& posterior) const
+{
+    // load the existing precisions as the basis for any update
+    SymmetricMatrix precisions;
+    precisions = posterior.GetPrecisions();
+
+    // init the Sig0 Value - to maximum value in Data
+    posterior.means(sig0_index()) = data.Maximum()*10; // Approximate increase for a particular data point
+    precisions(sig0_index(),sig0_index()) = 10;
+
+    posterior.means(T1_index()) = 1;
+    precisions(T1_index(), T1_index()) = 0.1;
+
+    posterior.SetPrecisions(precisions);
 }
 
 void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) const
