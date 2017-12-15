@@ -107,7 +107,7 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
     precisions(T1_index(), T1_index()) = 1e-12;
 
     prior.means(sig0_index()) = 0.01;
-    precisions(sig0_index(), sig0_index()) = 1e-12;
+    precisions(sig0_index(), sig0_index()) = 1e-13;
 
     prior.means(B1corr_index()) = 1;
     precisions(B1corr_index(), B1corr_index()) = 1e99;
@@ -132,8 +132,10 @@ void VFAFwdModel::InitParams(MVNDist& posterior) const
     SymmetricMatrix precisions;
     precisions = posterior.GetPrecisions();
 
-    // init the Sig0 Value - to maximum value in Data
-    posterior.means(sig0_index()) = data.Maximum()*10; // Approximate increase for a particular data point
+    // init the Sig0 Value - by setting T1 = 1 and finding the inverse for FA(1) assuming B1corr = 1
+    double sig0;
+    sig0 = data(1)*(1-cos(m_FAs(1))*exp(-m_TR))/(sin(m_FAs(1)*(1-exp(-m_TR))));
+    posterior.means(sig0_index()) = sig0; // Approximate increase for a particular data point
     precisions(sig0_index(),sig0_index()) = 10;
 
     posterior.means(T1_index()) = 1;
