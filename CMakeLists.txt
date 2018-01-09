@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.7)
 
 set(MODELS_NAME t1)
-set(MODELS_SRC fwdmodel_vfa.cc) 
+set(MODELS_SRC fwdmodel_vfa.cc fwdmodel_IR.cc) 
 
 add_library(fabber_models_${MODELS_NAME} SHARED ${MODELS_SRC} ${MODELS_NAME}_models.cc)
 add_executable(fabber_${MODELS_NAME} ${MODELS_SRC} fabber_client.cc)

@@ -1,10 +1,8 @@
-/*  fwdmodel_VFA.h - Implements the GRASE model
+/*  fwdmodel_IR.h - Implements an IR T1 solver in FABBER
 
-    Jesper Kallehauge, IBME
+    Alex Smith, FMRIB
 
-    Modified by: Alex Smith, FMRIB, 20171206
-
-    Copyright (C) 2007-2017 University of Oxford  */
+    Copyright (C) 2007-2016 University of Oxford  */
 
 /*  CCOPYRIGHT */
 
@@ -15,7 +13,7 @@
 #include <string>
 #include <vector>
 
-class VFAFwdModel : public FwdModel
+class IRFwdModel : public FwdModel
 {
 public:
     static FwdModel *NewInstance();
@@ -28,37 +26,22 @@ public:
     virtual void NameParams(std::vector<std::string> &names) const;
     virtual int NumParams() const
     {
-        return 3;
+        return (2 + (m_InvEff ? 1 : 0));
     }
 
     virtual void HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) const;
-    void InitParams(MVNDist& posterior) const;
     virtual void Evaluate(const NEWMAT::ColumnVector &params, NEWMAT::ColumnVector &result) const;
 
-    virtual ~VFAFwdModel()
+    virtual ~IRFwdModel()
     {
     }
 
 protected:
-    // Lookup the starting indices of the parameters
-    int T1_index() const
-    {
-        return 1;
-    }
-    int sig0_index() const
-    {
-        return 2;
-    }
-    int B1corr_index() const
-    {
-        return 3;
-    }
 
-    double m_TR;
-    bool m_radians;
-    NEWMAT::ColumnVector m_FAs;
+    NEWMAT::ColumnVector m_TI;
+    bool m_InvEff;
 
 private:
     /** Auto-register with forward model factory. */
-    static FactoryRegistration<FwdModelFactory, VFAFwdModel> registration;
+    static FactoryRegistration<FwdModelFactory, IRFwdModel> registration;
 };

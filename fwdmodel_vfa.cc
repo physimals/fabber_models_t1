@@ -2,13 +2,16 @@
 
     Jesper Kallehauge, IBME
 
-    Copyright (C) 2016 University of Oxford  */
+    Modified by: Alex Smith, FMRIB, 20171206
+
+    Copyright (C) 2007-2017 University of Oxford  */
 
 /*  CCOPYRIGHT */
 
 #include "fwdmodel_vfa.h"
 
 #include "fabber_core/tools.h"
+#include "miscmaths/miscprob.h"
 
 #include <newmatio.h>
 
@@ -57,30 +60,30 @@ string VFAFwdModel::ModelVersion() const
 
 void VFAFwdModel::Initialize(FabberRunData &rundata)
 {
-    m_tr = rundata.GetDouble("tr");
-    string fas_file = rundata.GetStringDefault("fas-file", "");
-    if (fas_file != "")
+    m_TR = rundata.GetDouble("TR");
+    string FAs_file = rundata.GetStringDefault("FAs-file", "");
+    if (FAs_file != "")
     {
-        m_fas = fabber::read_matrix_file(fas_file);
+        m_FAs = fabber::read_matrix_file(FAs_file);
     }
-    vector<double> fas = rundata.GetDoubleList("fa");
-    if (fas.size() > 0)
+    vector<double> FAs = rundata.GetDoubleList("FA");
+    if (FAs.size() > 0)
     {
-        if (fas_file != "")
+        if (FAs_file != "")
         {
             throw FabberRunDataError(
                 "Can't specify flip angles in a file and also using individual options");
         }
-        m_fas.ReSize(fas.size());
-        for (unsigned int i = 0; i < fas.size(); i++)
+        m_FAs.ReSize(FAs.size());
+        for (unsigned int i = 0; i < FAs.size(); i++)
         {
-            m_fas(i + 1) = fas[i];
+            m_FAs(i + 1) = FAs[i];
         }
     }
 
-    if (rundata.GetBool("radians"))
+    if (!rundata.GetBool("radians")) 
     {
-        m_fas = m_fas * 3.1415926 / 180;
+        m_FAs *= M_PI / 180;
     }
 }
 
@@ -90,6 +93,7 @@ void VFAFwdModel::NameParams(vector<string> &names) const
 
     names.push_back("T1");
     names.push_back("sig0");
+    names.push_back("B1corr");
 }
 
 void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) const
@@ -99,12 +103,14 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
     SymmetricMatrix precisions = IdentityMatrix(NumParams()) * 1e-12;
 
     // Set priors
-    // Fp or Ktrans whatever you belive
     prior.means(T1_index()) = 0.01;
     precisions(T1_index(), T1_index()) = 1e-12;
 
     prior.means(sig0_index()) = 0.01;
-    precisions(sig0_index(), sig0_index()) = 1e-12;
+    precisions(sig0_index(), sig0_index()) = 1e-13;
+
+    prior.means(B1corr_index()) = 1;
+    precisions(B1corr_index(), B1corr_index()) = 1e99;
 
     // Set precsions on priors
     prior.SetPrecisions(precisions);
@@ -112,8 +118,26 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
     // Set initial posterior
     posterior = prior;
 
-    // For parameters with uniformative prior chosoe more sensible inital posterior
+    // For parameters with uniformative prior choose more sensible inital posterior
     // Tissue perfusion
+    // posterior.means(T1_index()) = 1;
+    // precisions(T1_index(), T1_index()) = 0.1;
+
+    // posterior.SetPrecisions(precisions);
+}
+
+void VFAFwdModel::InitParams(MVNDist& posterior) const
+{
+    // load the existing precisions as the basis for any update
+    SymmetricMatrix precisions;
+    precisions = posterior.GetPrecisions();
+
+    // init the Sig0 Value - by setting T1 = 1 and finding the inverse for FA(1) assuming B1corr = 1
+    double sig0;
+    sig0 = data(1)*(1-cos(m_FAs(1))*exp(-m_TR))/(sin(m_FAs(1)*(1-exp(-m_TR))));
+    posterior.means(sig0_index()) = sig0; // Approximate increase for a particular data point
+    precisions(sig0_index(),sig0_index()) = 10;
+
     posterior.means(T1_index()) = 1;
     precisions(T1_index(), T1_index()) = 0.1;
 
@@ -136,17 +160,18 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     // parameters that are inferred - extract and give sensible names
     float T1;
     float sig0; //'inital' value of the signal
-    ColumnVector FA_radians;
+    double B1corr; // B1 Correction Factor
 
     // extract values from params
     sig0 = paramcpy(sig0_index());
     T1 = paramcpy(T1_index());
+    B1corr = paramcpy(B1corr_index());
     if (T1 < 1e-8)
         T1 = 1e-8;
     if (sig0 < 1e-8)
         sig0 = 1e-8;
 
-    int ntpts = m_fas.Nrows();
+    int ntpts = m_FAs.Nrows();
     if (data.Nrows() != ntpts)
     {
         throw FabberRunDataError("Number of volumes in data does not match number of flip angles");
@@ -157,8 +182,8 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     sig = 0.0;
     for (int i = 1; i <= ntpts; i++)
     {
-        sig(i)
-            = sig0 * sin(m_fas(i)) * (1 - exp(-m_tr / T1)) / (1 - cos(m_fas(i)) * exp(-m_tr / T1));
+        sig(i) = sig0 * sin(m_FAs(i)*B1corr) * (1 - exp(-m_TR / T1))
+            / (1 - cos(m_FAs(i)*B1corr) * exp(-m_TR / T1));
     }
     result = sig;
 
