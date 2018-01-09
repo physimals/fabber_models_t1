@@ -26,9 +26,7 @@ FactoryRegistration<FwdModelFactory, VFAFwdModel> VFAFwdModel::registration("vfa
 static OptionSpec OPTIONS[] = {
     { "tr", OPT_FLOAT, "TR in seconds for VFA images", OPT_REQ, "" },
     { "fas-file", OPT_MATRIX, "File containing a list of flip angles", OPT_NONREQ, "" },
-    { "fa<n>", OPT_MATRIX,
-        "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc",
-        OPT_NONREQ, "" },
+    { "fa<n>", OPT_MATRIX, "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc", OPT_NONREQ, "" },
     { "radians", OPT_BOOL, "If specified, flip angles are given in radians", OPT_NONREQ, "" },
 };
 
@@ -42,8 +40,7 @@ void VFAFwdModel::GetOptions(vector<OptionSpec> &opts) const
 
 std::string VFAFwdModel::GetDescription() const
 {
-    return "Calculates T1 from variable flip angle data, using the SPGR equation assuming a fixed "
-           "TR and that TE<<T2*";
+    return "Calculates T1 from variable flip angle data, using the SPGR equation assuming a fixed TR and that TE<<T2*";
 }
 
 string VFAFwdModel::ModelVersion() const
@@ -60,19 +57,18 @@ string VFAFwdModel::ModelVersion() const
 
 void VFAFwdModel::Initialize(FabberRunData &rundata)
 {
-    m_TR = rundata.GetDouble("TR");
+    m_TR = rundata.GetDouble("tr");
     string FAs_file = rundata.GetStringDefault("FAs-file", "");
     if (FAs_file != "")
     {
         m_FAs = fabber::read_matrix_file(FAs_file);
     }
-    vector<double> FAs = rundata.GetDoubleList("FA");
+    vector<double> FAs = rundata.GetDoubleList("fa");
     if (FAs.size() > 0)
     {
         if (FAs_file != "")
         {
-            throw FabberRunDataError(
-                "Can't specify flip angles in a file and also using individual options");
+            throw FabberRunDataError("Can't specify flip angles in a file and also using individual options");
         }
         m_FAs.ReSize(FAs.size());
         for (unsigned int i = 0; i < FAs.size(); i++)
@@ -81,7 +77,7 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
         }
     }
 
-    if (!rundata.GetBool("radians")) 
+    if (!rundata.GetBool("radians"))
     {
         m_FAs *= M_PI / 180;
     }
@@ -126,7 +122,7 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
     // posterior.SetPrecisions(precisions);
 }
 
-void VFAFwdModel::InitParams(MVNDist& posterior) const
+void VFAFwdModel::InitParams(MVNDist &posterior) const
 {
     // load the existing precisions as the basis for any update
     SymmetricMatrix precisions;
@@ -134,9 +130,9 @@ void VFAFwdModel::InitParams(MVNDist& posterior) const
 
     // init the Sig0 Value - by setting T1 = 1 and finding the inverse for FA(1) assuming B1corr = 1
     double sig0;
-    sig0 = data(1)*(1-cos(m_FAs(1))*exp(-m_TR))/(sin(m_FAs(1)*(1-exp(-m_TR))));
+    sig0 = data(1) * (1 - cos(m_FAs(1)) * exp(-m_TR)) / (sin(m_FAs(1) * (1 - exp(-m_TR))));
     posterior.means(sig0_index()) = sig0; // Approximate increase for a particular data point
-    precisions(sig0_index(),sig0_index()) = 10;
+    precisions(sig0_index(), sig0_index()) = 10;
 
     posterior.means(T1_index()) = 1;
     precisions(T1_index(), T1_index()) = 0.1;
@@ -158,8 +154,8 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     }
 
     // parameters that are inferred - extract and give sensible names
-    float T1;
-    float sig0; //'inital' value of the signal
+    double T1;
+    double sig0;   //'inital' value of the signal
     double B1corr; // B1 Correction Factor
 
     // extract values from params
@@ -174,7 +170,8 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     int ntpts = m_FAs.Nrows();
     if (data.Nrows() != ntpts)
     {
-        throw FabberRunDataError("Number of volumes in data does not match number of flip angles");
+        throw FabberRunDataError("Number of volumes in data: " + stringify(data.Nrows()) + " "
+                                 "does not match number of flip angles: " + stringify(ntpts));
     }
 
     // --- SPGR Function ----
@@ -182,8 +179,7 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     sig = 0.0;
     for (int i = 1; i <= ntpts; i++)
     {
-        sig(i) = sig0 * sin(m_FAs(i)*B1corr) * (1 - exp(-m_TR / T1))
-            / (1 - cos(m_FAs(i)*B1corr) * exp(-m_TR / T1));
+        sig(i) = sig0 * sin(m_FAs(i) * B1corr) * (1 - exp(-m_TR / T1)) / (1 - cos(m_FAs(i) * B1corr) * exp(-m_TR / T1));
     }
     result = sig;
 

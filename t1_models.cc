@@ -5,8 +5,8 @@ Copyright (C) 2010-2017 University of Oxford */
 /* CCOPYRIGHT  */
 
 #include "t1_models.h"
-#include "fwdmodel_vfa.h"
 #include "fwdmodel_IR.h"
+#include "fwdmodel_vfa.h"
 
 #include <string>
 

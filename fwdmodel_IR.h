@@ -37,7 +37,6 @@ public:
     }
 
 protected:
-
     NEWMAT::ColumnVector m_TI;
     bool m_InvEff;
 

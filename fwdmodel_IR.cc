@@ -20,10 +20,9 @@ using namespace std;
 
 FactoryRegistration<FwdModelFactory, IRFwdModel> IRFwdModel::registration("IR");
 
-static OptionSpec OPTIONS[] = {
-    { "TIs-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ, "" },
-    { "InvEfficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" }
-};
+static OptionSpec OPTIONS[] = { { "TIs-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ,
+                                    "" },
+    { "InvEfficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" } };
 
 void IRFwdModel::GetOptions(vector<OptionSpec> &opts) const
 {
@@ -57,8 +56,6 @@ void IRFwdModel::Initialize(FabberRunData &rundata)
 
     m_InvEff = false;
     m_InvEff = rundata.ReadBool("InvEfficiency");
-
-
 }
 
 void IRFwdModel::NameParams(vector<string> &names) const
@@ -95,7 +92,6 @@ void IRFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) const
         precisions(place, place) = 1e99;
         ++place;
     }
-    
 
     // Set precsions on priors
     prior.SetPrecisions(precisions);
@@ -126,9 +122,9 @@ void IRFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) cons
 
     // parameters that are inferred - extract and give sensible names
     double T1;
-    double sig0; //'inital' value of the signal
+    double sig0;   //'inital' value of the signal
     double InvEff; // B1 Correction Factor
-    int place {1};
+    int place{ 1 };
 
     // extract values from params
     // T1
@@ -154,18 +150,18 @@ void IRFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) cons
     if (sig0 < 1e-8)
         sig0 = 1e-8;
 
-   
     int ntpts = m_TI.Nrows();
-    if (data.Nrows() != ntpts) {
+    if (data.Nrows() != ntpts)
+    {
         throw FabberRunDataError("Number of volumes in data does not match number of inversion times");
     }
-    
+
     // --- IR Function ----
     ColumnVector sig(ntpts);
     sig = 0.0;
     for (int i = 1; i <= ntpts; i++)
     {
-        sig(i) = fabs(sig0*(1-2*InvEff*exp(-m_TI(i)/T1)));
+        sig(i) = fabs(sig0 * (1 - 2 * InvEff * exp(-m_TI(i) / T1)));
     }
     result = sig;
 
