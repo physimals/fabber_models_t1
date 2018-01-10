@@ -21,8 +21,8 @@ Current models included:
       --noise=white 
       --data-order=singlefile 
       --save-model-fit 
-      --FAs=FAvals.txt      // Degrees
-      --TR=0.2              // Seconds
+      --fas-file=FAvals.txt      // Degrees
+      --tr=0.2              // Seconds
 
 
 ## IR Command line example:
