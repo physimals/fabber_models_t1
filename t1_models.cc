@@ -24,7 +24,7 @@ const char *CALL get_model_name(int index)
         return "vfa";
         break;
     case 1:
-        return "IR";
+        return "ir";
         break;
     default:
         return NULL;
@@ -37,7 +37,7 @@ NewInstanceFptr CALL get_new_instance_func(const char *name)
     {
         return VFAFwdModel::NewInstance;
     }
-    else if (std::string(name) == "IR")
+    else if (std::string(name) == "ir")
     {
         return IRFwdModel::NewInstance;
     }

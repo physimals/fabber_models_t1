@@ -5,8 +5,8 @@
 This project includes different ways of estimating T1 in the FABBER framework
 
 Current models included:
-1. The Variable Flip Angle approach ("VFA")
-2. The Inversion Recovery approach ("IR")
+1. The Variable Flip Angle approach ("vfa")
+2. The Inversion Recovery approach ("ir")
 
 # Running Model:
 
@@ -32,9 +32,9 @@ Current models included:
       --data=Raw_T1_Data.nii 
       --mask=Raw_T1_Data_mask.nii 
       --method=vb 
-      --model=IR 
+      --model=ir 
       --noise=white 
       --data-order=singlefile 
       --save-model-fit 
-      --TIs-file=TIs.txt      // Seconds
-      --InvEfficiency         // Optional Boolean for Inversion Pulse Efficiency
+      --tis-file=TIs.txt      // Seconds
+      --invefficiency         // Optional Boolean for Inversion Pulse Efficiency

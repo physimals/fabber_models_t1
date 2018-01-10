@@ -18,11 +18,11 @@
 using namespace NEWMAT;
 using namespace std;
 
-FactoryRegistration<FwdModelFactory, IRFwdModel> IRFwdModel::registration("IR");
+FactoryRegistration<FwdModelFactory, IRFwdModel> IRFwdModel::registration("ir");
 
-static OptionSpec OPTIONS[] = { { "TIs-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ,
+static OptionSpec OPTIONS[] = { { "tis-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ,
                                     "" },
-    { "InvEfficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" } };
+    { "invefficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" } };
 
 void IRFwdModel::GetOptions(vector<OptionSpec> &opts) const
 {
@@ -51,11 +51,11 @@ string IRFwdModel::ModelVersion() const
 
 void IRFwdModel::Initialize(FabberRunData &rundata)
 {
-    string TIs = rundata.GetStringDefault("TIs-file", "");
+    string TIs = rundata.GetStringDefault("tis-file", "");
     m_TI = fabber::read_matrix_file(TIs);
 
     m_InvEff = false;
-    m_InvEff = rundata.ReadBool("InvEfficiency");
+    m_InvEff = rundata.ReadBool("invefficiency");
 }
 
 void IRFwdModel::NameParams(vector<string> &names) const
