@@ -124,7 +124,7 @@ void IRFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) cons
     double T1;
     double sig0;   //'inital' value of the signal
     double InvEff; // B1 Correction Factor
-    int place{ 1 };
+    int place = 1;
 
     // extract values from params
     // T1
