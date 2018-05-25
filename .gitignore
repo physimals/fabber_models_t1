@@ -10,3 +10,5 @@ fabber_t1
 build_*
 
 \.vscode/
+
+build/
