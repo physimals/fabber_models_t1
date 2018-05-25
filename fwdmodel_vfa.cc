@@ -58,7 +58,7 @@ string VFAFwdModel::ModelVersion() const
 void VFAFwdModel::Initialize(FabberRunData &rundata)
 {
     m_TR = rundata.GetDouble("tr");
-    string FAs_file = rundata.GetStringDefault("FAs-file", "");
+    string FAs_file = rundata.GetStringDefault("fas-file", "");
     if (FAs_file != "")
     {
         m_FAs = fabber::read_matrix_file(FAs_file);
