@@ -20,9 +20,11 @@ using namespace std;
 
 FactoryRegistration<FwdModelFactory, IRFwdModel> IRFwdModel::registration("ir");
 
-static OptionSpec OPTIONS[] = { { "tis-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ,
-                                    "" },
-    { "invefficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" } };
+static OptionSpec OPTIONS[] = { 
+    { "tis-file", OPT_MATRIX, "File containing a list of inversion times (s)", OPT_REQ, "" },
+    { "invefficiency", OPT_BOOL, "If specified, will also calculate the inversion pulse efficiency", OPT_NONREQ, "" },
+    { "" }
+};
 
 void IRFwdModel::GetOptions(vector<OptionSpec> &opts) const
 {

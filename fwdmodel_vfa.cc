@@ -28,6 +28,7 @@ static OptionSpec OPTIONS[] = {
     { "fas-file", OPT_MATRIX, "File containing a list of flip angles", OPT_NONREQ, "" },
     { "fa<n>", OPT_MATRIX, "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc", OPT_NONREQ, "" },
     { "radians", OPT_BOOL, "If specified, flip angles are given in radians", OPT_NONREQ, "" },
+    { "" }
 };
 
 void VFAFwdModel::GetOptions(vector<OptionSpec> &opts) const
@@ -77,6 +78,10 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
         }
     }
 
+    if (FAs.size() == 0) {
+        throw InvalidOptionValue("fa<n>", "No flip angles given", "At least one flip angle must be specified");
+    }
+    
     if (!rundata.GetBool("radians"))
     {
         m_FAs *= M_PI / 180;
