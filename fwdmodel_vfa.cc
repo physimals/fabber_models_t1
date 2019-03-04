@@ -26,7 +26,7 @@ FactoryRegistration<FwdModelFactory, VFAFwdModel> VFAFwdModel::registration("vfa
 static OptionSpec OPTIONS[] = {
     { "tr", OPT_FLOAT, "TR in seconds for VFA images", OPT_REQ, "" },
     { "fas-file", OPT_MATRIX, "File containing a list of flip angles", OPT_NONREQ, "" },
-    { "fa<n>", OPT_MATRIX, "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc", OPT_NONREQ, "" },
+    { "fa<n>", OPT_FLOAT, "Alternative to fas-file, specify a sequence of flip angles --fa1=12 --fa2=15 etc", OPT_NONREQ, "" },
     { "radians", OPT_BOOL, "If specified, flip angles are given in radians", OPT_NONREQ, "" },
     { "" }
 };
@@ -81,7 +81,7 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
     if (FAs.size() == 0) {
         throw InvalidOptionValue("fa<n>", "No flip angles given", "At least one flip angle must be specified");
     }
-    
+
     if (!rundata.GetBool("radians"))
     {
         m_FAs *= M_PI / 180;
@@ -129,6 +129,12 @@ void VFAFwdModel::HardcodedInitialDists(MVNDist &prior, MVNDist &posterior) cons
 
 void VFAFwdModel::InitParams(MVNDist &posterior) const
 {
+    if (data.Nrows() != m_FAs.Nrows())
+    {
+        throw FabberRunDataError("Number of volumes in data: " + stringify(data.Nrows()) + " "
+                                 "does not match number of flip angles: " + stringify(m_FAs.Nrows()));
+    }
+
     // load the existing precisions as the basis for any update
     SymmetricMatrix precisions;
     precisions = posterior.GetPrecisions();
@@ -159,26 +165,16 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
     }
 
     // parameters that are inferred - extract and give sensible names
-    double T1;
-    double sig0;   //'inital' value of the signal
-    double B1corr; // B1 Correction Factor
-
-    // extract values from params
-    sig0 = paramcpy(sig0_index());
-    T1 = paramcpy(T1_index());
-    B1corr = paramcpy(B1corr_index());
+    double sig0 = paramcpy(sig0_index());
+    double T1 = paramcpy(T1_index());
+    double B1corr = paramcpy(B1corr_index());
     if (T1 < 1e-8)
         T1 = 1e-8;
     if (sig0 < 1e-8)
         sig0 = 1e-8;
 
     int ntpts = m_FAs.Nrows();
-    if (data.Nrows() != ntpts)
-    {
-        throw FabberRunDataError("Number of volumes in data: " + stringify(data.Nrows()) + " "
-                                 "does not match number of flip angles: " + stringify(ntpts));
-    }
-
+    
     // --- SPGR Function ----
     ColumnVector sig(ntpts);
     sig = 0.0;
