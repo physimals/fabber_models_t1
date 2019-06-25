@@ -78,7 +78,7 @@ void VFAFwdModel::Initialize(FabberRunData &rundata)
         }
     }
 
-    if (FAs.size() == 0) {
+    if (m_FAs.size() == 0) {
         throw InvalidOptionValue("fa<n>", "No flip angles given", "At least one flip angle must be specified");
     }
 
