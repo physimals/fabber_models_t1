@@ -13,7 +13,7 @@
 #include "fabber_core/tools.h"
 #include "miscmaths/miscprob.h"
 
-#include <newmatio.h>
+#include "armawrap/newmat.h"
 
 #include <string>
 #include <vector>
@@ -174,7 +174,7 @@ void VFAFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
         sig0 = 1e-8;
 
     int ntpts = m_FAs.Nrows();
-    
+
     // --- SPGR Function ----
     ColumnVector sig(ntpts);
     sig = 0.0;
