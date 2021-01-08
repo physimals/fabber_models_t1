@@ -1,8 +1,8 @@
 include ${FSLCONFDIR}/default.mk
 
 PROJNAME = fabber_t1
-LIBS = -lfsl-fabber_models_t1 -lfsl-fabberexec -lfsl-fabbercore \
-       -lfsl-newimage -lfsl-miscmaths -lfsl-utils -lfsl-cprob \
+LIBS = -lfsl-fabberexec -lfsl-fabbercore -lfsl-newimage \
+       -lfsl-miscmaths -lfsl-utils -lfsl-cprob \
        -lfsl-NewNifti -lfsl-znz -ldl
 XFILES = fabber_t1
 SOFILES = libfsl-fabber_models_t1.so
@@ -26,10 +26,8 @@ all: ${XFILES} ${SOFILES}
 
 # models in a library
 libfsl-fabber_models_t1.so : ${OBJS}
-	${CXX} ${CXXFLAGS} -shared -o $@ $^
+	${CXX} ${CXXFLAGS} -shared -o $@ $^ ${LDFLAGS}
 
 # fabber built from the FSL fabbercore library including the models specifieid in this project
 fabber_t1 : fabber_client.o libfsl-fabber_models_t1.so
-	${CXX} ${CXXFLAGS} -o $@ $< ${LDFLAGS}
-
-# DO NOT DELETE
+	${CXX} ${CXXFLAGS} -o $@ $< -lfsl-fabber_models_t1 ${LDFLAGS}
