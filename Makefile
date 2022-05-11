@@ -57,7 +57,7 @@ else
 all: ${XFILES} ${AFILES}
 
 libfabber_models_t1.a : ${OBJS}
-	${AR} -r $@ @^
+	${AR} -r $@ $^
 
 fabber_t1 : fabber_client.o ${OBJS}
 	${CXX} ${CXXFLAGS} -o $@ $^ ${LDFLAGS}
